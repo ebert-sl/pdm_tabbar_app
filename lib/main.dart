@@ -25,11 +25,41 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class DetalhesContatoScreen extends StatelessWidget {
+  final Map<String, dynamic> contato;
+
+  DetalhesContatoScreen({required this.contato});
+
+  @override
+  Widget build(BuildContext context) {
+    // Aqui você pode usar os detalhes do contato para construir a tela
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Detalhes do Contato'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('ID: ${contato['id']}'),
+            Text('Nome: ${contato['nome']}'),
+            Text('Email: ${contato['email']}'),
+          ],
+        ),
+
+      ),
+    );
+  }
+}
+
+
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   int? idContato;
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  late TabController _tabController;
   List<Map<String, dynamic>> _contatos = [];
+  Map<String, dynamic>? _contatoSelecionado;
 
   _openBanco() async {
     var dataBasePath = await getDatabasesPath();
@@ -66,18 +96,22 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _verContatos();
+  }
+
+  void _onTabChanged() {
+    setState(() {}); // Atualiza o estado para reconstruir a AppBar
   }
   
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      initialIndex: 0,
-      length: 3, 
-      child: Scaffold(
+   return Scaffold(
         appBar: AppBar(
-          title: const Text('TabBar Widget'),
-          bottom: const TabBar(
+          title: const Text('Contatos'),
+          bottom: TabBar(
+            controller: _tabController,
             tabs: <Widget>[
               Tab(
                 icon: Icon(Icons.add_box_outlined),
@@ -92,6 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
         body: TabBarView(
+          controller: _tabController,
           children: <Widget>[
             // Tab 1
             Column(
@@ -138,17 +173,26 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: _contatos.length,
               itemBuilder: (BuildContext context, int index) {
                 return ListTile(
-                  title: Text(_contatos[index]['nome']),
+                  title: Text(_contatos[index]['nome']), 
+                  trailing: IconButton(
+                  icon: Icon(Icons.arrow_forward),
+                  onPressed: () {
+                    // Atualize para a Tab 3
+                    _tabController.animateTo(2);
+                    // Passar os detalhes do contato para a Tab 3
+                    setState(() {
+                      _contatoSelecionado = _contatos[index];
+                    });
+                  },
+                ),
                 );
               },
             ),
             // Tab 3
-            Center(
-              child: Text('Tab 3')
-            ),
+            DetalhesContatoScreen(contato: _contatoSelecionado ?? {}),
           ]
         )
-      ),
-    );
+      );
+   
   }
 }
